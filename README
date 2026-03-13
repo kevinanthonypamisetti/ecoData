@@ -1,0 +1,32 @@
+# ecoData — Sustainable Liquid Cooling for Data Centers
+
+A digital twin simulator and sustainability demonstration for a closed-loop 
+liquid cooling system designed to reduce water consumption, energy usage, 
+and thermal inefficiency in modern data centers.
+
+## What This Is
+ecoData models a GPU/CPU → Cold Plate → Pump → Heat Exchanger → Radiator 
+cooling loop using real thermal physics (Q = ṁ · Cₚ · ΔT). 
+The interactive web demo lets you adjust system parameters and watch 
+live calculations update in real time.
+
+## Features
+- Live physics simulator (GPU power, flow rate, ambient temp inputs)
+- Real-time outputs: junction temp, coolant inlet/outlet, PUE score
+- Animated cooling loop visualization
+- Water usage comparison: Traditional vs ecoData (fresh + grey water)
+- Scale simulation: single server → full data center
+
+## Status
+- [x] Phase 1 — Digital twin simulator (complete)
+- [ ] Phase 2 — Physical prototype (~$150 Arduino build)
+- [ ] Phase 3 — Rack-scale cooling module
+- [ ] Phase 4 — AI-optimized cooling platform
+
+
+## Tech
+HTML · CSS · JavaScript · Chart.js · Thermal Physics Modeling
+
+## Goal
+Reduce data center water usage by ~90% using closed-loop grey water 
+recirculation — validated by digital twin before physical build.
