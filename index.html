@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ecoData — Liquid Cooling for Data Centers</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050d0f;
+    --bg2: #071217;
+    --teal: #00e5c8;
+    --teal2: #00b39e;
+    --blue: #0af0ff;
+    --warm: #ff6b35;
+    --cool: #00e5c8;
+    --text: #e8f4f2;
+    --muted: #6b8f8a;
+    --card: rgba(0,229,200,0.04);
+    --border: rgba(0,229,200,0.12);
+    --glow: 0 0 40px rgba(0,229,200,0.15);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.5;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: rgba(5,13,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.4rem;
+    color: var(--teal);
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none;
+    font-size: 0.85rem; font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--teal); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 8rem 3rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 40%, rgba(0,229,200,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(10,240,255,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 80% 10%, rgba(0,179,158,0.05) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,229,200,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,200,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 900px; }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.15em;
+    color: var(--teal); text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.9rem; border-radius: 2rem;
+    margin-bottom: 2rem;
+    background: rgba(0,229,200,0.05);
+    animation: fadeSlideUp 0.8s ease both;
+  }
+  .hero-tag::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.8rem, 7vw, 6.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    animation: fadeSlideUp 0.8s 0.1s ease both;
+  }
+  .hero h1 .accent { color: var(--teal); }
+  .hero h1 .line2 {
+    display: block;
+    -webkit-text-stroke: 1px rgba(0,229,200,0.5);
+    color: transparent;
+  }
+  .hero-sub {
+    font-size: 1.15rem; max-width: 580px; color: rgba(232,244,242,0.7);
+    margin-bottom: 3rem; font-weight: 300; line-height: 1.8;
+    animation: fadeSlideUp 0.8s 0.2s ease both;
+  }
+  .hero-ctas {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    animation: fadeSlideUp 0.8s 0.3s ease both;
+  }
+  .btn-primary {
+    background: var(--teal); color: #050d0f;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    padding: 0.85rem 2rem; border-radius: 4px;
+    text-decoration: none; font-size: 0.9rem;
+    transition: all 0.2s; border: none; cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--blue); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,200,0.3); }
+  .btn-ghost {
+    background: transparent; color: var(--teal);
+    font-family: 'Syne', sans-serif; font-weight: 600;
+    padding: 0.85rem 2rem; border-radius: 4px;
+    text-decoration: none; font-size: 0.9rem;
+    border: 1px solid var(--border); transition: all 0.2s; cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .btn-ghost:hover { border-color: var(--teal); background: rgba(0,229,200,0.07); transform: translateY(-2px); }
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 5rem; flex-wrap: wrap;
+    animation: fadeSlideUp 0.8s 0.4s ease both;
+    padding-top: 3rem; border-top: 1px solid var(--border);
+  }
+  .stat-item {}
+  .stat-num {
+    font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800;
+    color: var(--teal); display: block; line-height: 1;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+    margin-top: 0.3rem; display: block;
+  }
+
+  /* ── COOLING LOOP ANIMATION ── */
+  .loop-section {
+    padding: 6rem 3rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  .section-sub { color: rgba(232,244,242,0.6); max-width: 560px; font-size: 1rem; }
+  .loop-viz {
+    margin: 4rem auto 0;
+    max-width: 900px;
+    position: relative;
+  }
+  .loop-svg-wrap {
+    width: 100%; background: rgba(0,229,200,0.02);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 2rem; overflow: visible;
+  }
+  /* SVG coolant flow animation */
+  @keyframes flowAnim {
+    from { stroke-dashoffset: 200; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes spinPump {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .coolant-path {
+    stroke-dasharray: 12 6;
+    animation: flowAnim 1.5s linear infinite;
+  }
+  .pump-spin {
+    transform-origin: 450px 240px;
+    animation: spinPump 1s linear infinite;
+  }
+  .temp-hot { fill: #ff6b35; }
+  .temp-warm { fill: #ffb347; }
+  .temp-cool { fill: #00e5c8; }
+  .temp-cold { fill: #0af0ff; }
+
+  /* ── SIMULATOR ── */
+  .simulator-section { padding: 6rem 3rem; }
+  .sim-grid {
+    display: grid; grid-template-columns: 1fr 1.3fr;
+    gap: 3rem; max-width: 1100px; margin: 3rem auto 0;
+    align-items: start;
+  }
+  .sim-controls {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+  }
+  .sim-controls h3 {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    margin-bottom: 1.5rem; color: var(--teal); letter-spacing: 0.02em;
+  }
+  .control-group { margin-bottom: 1.5rem; }
+  .control-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Space Mono', monospace; font-size: 0.7rem;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .control-label span { color: var(--teal); font-weight: 700; font-size: 0.8rem; }
+  input[type=range] {
+    width: 100%; -webkit-appearance: none; height: 4px;
+    background: rgba(0,229,200,0.15); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--teal); cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,229,200,0.5);
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+  .sim-outputs { display: flex; flex-direction: column; gap: 1rem; }
+  .output-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.4rem 1.8rem;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: border-color 0.3s;
+  }
+  .output-card:hover { border-color: rgba(0,229,200,0.3); }
+  .output-label {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+  }
+  .output-val {
+    font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800;
+    color: var(--teal); transition: color 0.3s;
+  }
+  .output-val.hot { color: #ff6b35; }
+  .output-val.warm { color: #ffb347; }
+  .output-unit {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted);
+    margin-left: 3px;
+  }
+  .efficiency-bar-wrap {
+    margin-top: 0.5rem; height: 4px;
+    background: rgba(0,229,200,0.1); border-radius: 2px; overflow: hidden;
+  }
+  .efficiency-bar {
+    height: 100%; background: var(--teal); border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  /* Chart */
+  .chart-wrap {
+    grid-column: 1 / -1;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+    margin-top: 1rem;
+  }
+  .chart-wrap h3 {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem;
+    margin-bottom: 1.5rem; color: var(--muted);
+    font-family: 'Space Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.7rem;
+  }
+  canvas { width: 100%; }
+
+  /* ── WATER COMPARISON ── */
+  .water-section {
+    padding: 6rem 3rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+  }
+  .water-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 1.5rem; max-width: 1000px; margin: 3rem auto 0;
+  }
+  .water-card {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 2rem 1.5rem; position: relative; overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .water-card:hover { transform: translateY(-4px); border-color: rgba(0,229,200,0.3); }
+  .water-card.featured { border-color: var(--teal); background: rgba(0,229,200,0.04); }
+  .water-card.featured::before {
+    content: 'BEST'; position: absolute; top: 1rem; right: 1rem;
+    background: var(--teal); color: #050d0f;
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 2px;
+  }
+  .water-method {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .water-desc {
+    font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6;
+  }
+  .water-bar-label {
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+    display: flex; justify-content: space-between; margin-bottom: 0.4rem;
+  }
+  .water-bar-track {
+    height: 8px; background: rgba(255,255,255,0.06);
+    border-radius: 4px; overflow: hidden; margin-bottom: 0.3rem;
+  }
+  .water-bar-fill {
+    height: 100%; border-radius: 4px; transition: width 1s 0.5s ease;
+  }
+  .bar-red { background: linear-gradient(90deg, #ff4444, #ff6b35); }
+  .bar-yellow { background: linear-gradient(90deg, #ffb347, #ffd700); }
+  .bar-teal { background: linear-gradient(90deg, #00e5c8, #0af0ff); }
+  .bar-green { background: linear-gradient(90deg, #00c97f, #00e5c8); }
+  .water-scale-sim {
+    max-width: 1000px; margin: 3rem auto 0;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+  }
+  .scale-tabs {
+    display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap;
+  }
+  .scale-tab {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.4rem 1rem; border-radius: 3px; cursor: pointer; border: none;
+    background: rgba(0,229,200,0.06); color: var(--muted);
+    transition: all 0.2s;
+  }
+  .scale-tab.active { background: var(--teal); color: #050d0f; font-weight: 700; }
+  .scale-compare {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+  }
+  .compare-col { }
+  .compare-col h4 {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .big-number {
+    font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800;
+    line-height: 1; margin-bottom: 0.3rem; transition: all 0.4s;
+  }
+  .big-number.bad { color: #ff6b35; }
+  .big-number.good { color: var(--teal); }
+  .big-sub { font-size: 0.82rem; color: var(--muted); }
+
+  /* ── ROADMAP ── */
+  .roadmap-section { padding: 6rem 3rem; }
+  .roadmap-track {
+    max-width: 800px; margin: 3rem auto 0;
+    position: relative;
+  }
+  .roadmap-track::before {
+    content: ''; position: absolute; left: 20px; top: 0; bottom: 0;
+    width: 1px; background: var(--border);
+  }
+  .roadmap-item {
+    display: flex; gap: 2rem; margin-bottom: 3rem; position: relative;
+  }
+  .roadmap-dot {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700;
+    position: relative; z-index: 1;
+  }
+  .roadmap-dot.done { background: var(--teal); color: #050d0f; }
+  .roadmap-dot.current {
+    background: transparent; border: 2px solid var(--teal); color: var(--teal);
+    box-shadow: 0 0 20px rgba(0,229,200,0.3);
+    animation: glowPulse 2s infinite;
+  }
+  .roadmap-dot.next { background: rgba(0,229,200,0.08); border: 1px solid var(--border); color: var(--muted); }
+  @keyframes glowPulse {
+    0%,100% { box-shadow: 0 0 10px rgba(0,229,200,0.3); }
+    50% { box-shadow: 0 0 30px rgba(0,229,200,0.6); }
+  }
+  .roadmap-content { padding-top: 0.5rem; }
+  .roadmap-phase {
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 0.3rem;
+  }
+  .roadmap-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  .roadmap-desc { font-size: 0.9rem; color: rgba(232,244,242,0.6); }
+
+  /* ── TECH STACK ── */
+  .tech-section {
+    padding: 6rem 3rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+  }
+  .physics-formula {
+    font-family: 'Space Mono', monospace;
+    background: rgba(0,229,200,0.05); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.5rem 2rem;
+    font-size: 1.2rem; color: var(--teal);
+    text-align: center; max-width: 400px; margin: 2rem 0;
+    letter-spacing: 0.05em;
+  }
+  .tech-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+    gap: 1rem; margin-top: 2.5rem;
+  }
+  .tech-pill {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.2rem;
+    display: flex; align-items: center; gap: 0.8rem;
+    font-size: 0.85rem; transition: all 0.2s;
+  }
+  .tech-pill:hover { border-color: rgba(0,229,200,0.3); background: rgba(0,229,200,0.04); }
+  .tech-icon { font-size: 1.3rem; }
+
+  /* ── ABOUT / CTA ── */
+  .cta-section {
+    padding: 8rem 3rem;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(0,229,200,0.06), transparent 70%);
+  }
+  .cta-section > * { position: relative; z-index: 1; }
+  .cta-section h2 {
+    font-family: 'Syne', sans-serif; font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 1rem;
+  }
+  .cta-section p { color: rgba(232,244,242,0.6); max-width: 500px; margin: 0 auto 2.5rem; }
+  .cta-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2rem 3rem;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--teal); }
+  .footer-copy {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: var(--muted); letter-spacing: 0.05em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+    .sim-grid { grid-template-columns: 1fr; }
+    .water-grid { grid-template-columns: 1fr; }
+    .scale-compare { grid-template-columns: 1fr; }
+    .loop-section, .simulator-section, .water-section,
+    .roadmap-section, .tech-section, .cta-section { padding: 4rem 1.5rem; }
+    footer { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#"><span>eco</span>Data</a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#simulator">Simulator</a></li>
+    <li><a href="#water">Water Impact</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Sustainable Data Center Cooling</div>
+    <h1>
+      Cool Servers.<br>
+      <span class="accent">Save Water.</span>
+      <span class="line2">Save the Grid.</span>
+    </h1>
+    <p class="hero-sub">
+      ecoData is a closed-loop liquid cooling system for data centers — cutting water waste, energy consumption, and thermal inefficiency with real physics and a working digital twin.
+    </p>
+    <div class="hero-ctas">
+      <a href="#simulator" class="btn-primary">Try Live Simulator</a>
+      <a href="#how-it-works" class="btn-ghost">See How It Works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">~90%</span>
+        <span class="stat-label">Water Reduction</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">40%</span>
+        <span class="stat-label">Energy Savings</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">1.1</span>
+        <span class="stat-label">Target PUE</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">Q = mCΔT</span>
+        <span class="stat-label">Real Physics Engine</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="loop-section" id="how-it-works">
+  <div style="max-width:1100px; margin:0 auto;">
+    <p class="section-label reveal">System Architecture</p>
+    <h2 class="section-title reveal">The Closed-Loop Cooling Cycle</h2>
+    <p class="section-sub reveal">Coolant absorbs heat at the source, transfers it externally, then recirculates — a zero-loss thermal loop.</p>
+
+    <div class="loop-viz reveal">
+      <div class="loop-svg-wrap">
+        <svg viewBox="0 0 900 340" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+          <!-- Background -->
+          <rect width="900" height="340" fill="rgba(0,0,0,0)"/>
+
+          <!-- MAIN PIPE LOOP (animated coolant) -->
+          <!-- Top pipe: CPU→ right -->
+          <path d="M150 90 L750 90" stroke="rgba(0,229,200,0.15)" stroke-width="14" stroke-linecap="round"/>
+          <path d="M150 90 L750 90" class="coolant-path" stroke="url(#hotGrad)" stroke-width="6" stroke-linecap="round"/>
+          <!-- Right pipe: down -->
+          <path d="M750 90 L750 250" stroke="rgba(0,229,200,0.15)" stroke-width="14" stroke-linecap="round"/>
+          <path d="M750 90 L750 250" class="coolant-path" stroke="url(#warmGrad)" stroke-width="6" stroke-linecap="round" style="animation-delay:-0.5s"/>
+          <!-- Bottom pipe: right→left -->
+          <path d="M750 250 L150 250" stroke="rgba(0,229,200,0.15)" stroke-width="14" stroke-linecap="round"/>
+          <path d="M750 250 L150 250" class="coolant-path" stroke="url(#coolGrad)" stroke-width="6" stroke-linecap="round" style="animation-delay:-1s"/>
+          <!-- Left pipe: up -->
+          <path d="M150 250 L150 90" stroke="rgba(0,229,200,0.15)" stroke-width="14" stroke-linecap="round"/>
+          <path d="M150 250 L150 90" class="coolant-path" stroke="url(#coldGrad)" stroke-width="6" stroke-linecap="round" style="animation-delay:-1.5s"/>
+
+          <!-- Gradients -->
+          <defs>
+            <linearGradient id="hotGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#ff6b35"/>
+              <stop offset="100%" stop-color="#ffb347"/>
+            </linearGradient>
+            <linearGradient id="warmGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffb347"/>
+              <stop offset="100%" stop-color="#00e5c8"/>
+            </linearGradient>
+            <linearGradient id="coolGrad" x1="1" y1="0" x2="0" y2="0">
+              <stop offset="0%" stop-color="#00e5c8"/>
+              <stop offset="100%" stop-color="#0af0ff"/>
+            </linearGradient>
+            <linearGradient id="coldGrad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#0af0ff"/>
+              <stop offset="100%" stop-color="#ff6b35"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+
+          <!-- COMPONENT: GPU/CPU Cold Plate (left) -->
+          <rect x="80" y="130" width="140" height="80" rx="8" fill="rgba(255,107,53,0.12)" stroke="rgba(255,107,53,0.5)" stroke-width="1.5"/>
+          <text x="150" y="162" text-anchor="middle" fill="#ff6b35" font-family="Space Mono,monospace" font-size="9" letter-spacing="1" font-weight="700">GPU / CPU</text>
+          <text x="150" y="177" text-anchor="middle" fill="rgba(255,107,53,0.7)" font-family="Space Mono,monospace" font-size="8">COLD PLATE</text>
+          <text x="150" y="196" text-anchor="middle" fill="#ffb347" font-family="Space Mono,monospace" font-size="10" font-weight="700">≈ 85°C</text>
+
+          <!-- COMPONENT: Heat Exchanger (top center) -->
+          <rect x="330" y="55" width="140" height="70" rx="8" fill="rgba(255,179,71,0.08)" stroke="rgba(255,179,71,0.4)" stroke-width="1.5"/>
+          <text x="400" y="84" text-anchor="middle" fill="#ffb347" font-family="Space Mono,monospace" font-size="9" letter-spacing="1" font-weight="700">HEAT</text>
+          <text x="400" y="96" text-anchor="middle" fill="#ffb347" font-family="Space Mono,monospace" font-size="9" letter-spacing="1" font-weight="700">EXCHANGER</text>
+          <text x="400" y="112" text-anchor="middle" fill="rgba(255,179,71,0.6)" font-family="Space Mono,monospace" font-size="8">→ AMBIENT</text>
+
+          <!-- COMPONENT: Radiator (right) -->
+          <rect x="680" y="130" width="140" height="80" rx="8" fill="rgba(0,229,200,0.08)" stroke="rgba(0,229,200,0.4)" stroke-width="1.5"/>
+          <!-- Radiator fins -->
+          <line x1="705" y1="145" x2="705" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="718" y1="145" x2="718" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="731" y1="145" x2="731" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="744" y1="145" x2="744" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="757" y1="145" x2="757" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="770" y1="145" x2="770" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="783" y1="145" x2="783" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <line x1="796" y1="145" x2="796" y2="195" stroke="rgba(0,229,200,0.3)" stroke-width="1"/>
+          <text x="750" y="218" text-anchor="middle" fill="#00e5c8" font-family="Space Mono,monospace" font-size="9" font-weight="700">RADIATOR</text>
+          <text x="750" y="230" text-anchor="middle" fill="rgba(0,229,200,0.6)" font-family="Space Mono,monospace" font-size="8">≈ 35°C</text>
+
+          <!-- COMPONENT: Pump (bottom center) -->
+          <g class="pump-spin">
+            <circle cx="450" cy="250" r="28" fill="rgba(10,240,255,0.08)" stroke="rgba(10,240,255,0.4)" stroke-width="1.5"/>
+            <path d="M450 222 L454 240 L450 236 L446 240 Z" fill="rgba(10,240,255,0.7)"/>
+            <path d="M478 250 L460 246 L464 250 L460 254 Z" fill="rgba(10,240,255,0.7)"/>
+            <path d="M450 278 L446 260 L450 264 L454 260 Z" fill="rgba(10,240,255,0.7)"/>
+            <path d="M422 250 L440 254 L436 250 L440 246 Z" fill="rgba(10,240,255,0.7)"/>
+          </g>
+          <text x="450" y="300" text-anchor="middle" fill="#0af0ff" font-family="Space Mono,monospace" font-size="9" font-weight="700">PUMP</text>
+
+          <!-- Flow direction arrows -->
+          <text x="295" y="82" text-anchor="middle" fill="#ffb347" font-size="10" opacity="0.6">▶</text>
+          <text x="765" y="180" text-anchor="middle" fill="#00e5c8" font-size="10" opacity="0.6">▼</text>
+          <text x="605" y="265" text-anchor="middle" fill="#0af0ff" font-size="10" opacity="0.6">◀</text>
+          <text x="145" y="200" text-anchor="middle" fill="#ff6b35" font-size="10" opacity="0.6">▲</text>
+
+          <!-- Temperature labels on pipes -->
+          <text x="220" y="82" text-anchor="middle" fill="rgba(255,107,53,0.8)" font-family="Space Mono,monospace" font-size="8">HOT COOLANT →</text>
+          <text x="620" y="82" text-anchor="middle" fill="rgba(255,179,71,0.8)" font-family="Space Mono,monospace" font-size="8">→ HEAT OUT</text>
+          <text x="600" y="268" text-anchor="middle" fill="rgba(0,229,200,0.8)" font-family="Space Mono,monospace" font-size="8">← COOLED LIQUID</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SIMULATOR -->
+<section class="simulator-section" id="simulator">
+  <div style="max-width:1100px; margin:0 auto;">
+    <p class="section-label reveal">Digital Twin</p>
+    <h2 class="section-title reveal">Live Physics Simulator</h2>
+    <p class="section-sub reveal">Adjust parameters and watch real thermal calculations update in real-time using Q = ṁ · Cₚ · ΔT.</p>
+
+    <div class="sim-grid">
+      <!-- Controls -->
+      <div class="sim-controls reveal">
+        <h3>// INPUT PARAMETERS</h3>
+        <div class="control-group">
+          <div class="control-label">GPU Power <span id="gpu-val">350</span> W</div>
+          <input type="range" id="gpu-power" min="100" max="700" value="350" oninput="updateSim()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">CPU Power <span id="cpu-val">150</span> W</div>
+          <input type="range" id="cpu-power" min="50" max="400" value="150" oninput="updateSim()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Flow Rate <span id="flow-val">2.0</span> L/min</div>
+          <input type="range" id="flow-rate" min="5" max="50" value="20" oninput="updateSim()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Ambient Temp <span id="amb-val">25</span>°C</div>
+          <input type="range" id="amb-temp" min="15" max="45" value="25" oninput="updateSim()">
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="sim-outputs">
+        <div class="output-card reveal">
+          <div>
+            <div class="output-label">GPU Junction Temp</div>
+            <div class="efficiency-bar-wrap" style="width:120px; margin-top:6px;">
+              <div class="efficiency-bar" id="gpu-bar" style="width:60%; background:linear-gradient(90deg,#ff6b35,#ff4444);"></div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="output-val hot" id="gpu-temp">68</span><span class="output-unit">°C</span>
+          </div>
+        </div>
+        <div class="output-card reveal">
+          <div><div class="output-label">Coolant Inlet Temp</div></div>
+          <div style="text-align:right;">
+            <span class="output-val" id="inlet-temp">28</span><span class="output-unit">°C</span>
+          </div>
+        </div>
+        <div class="output-card reveal">
+          <div><div class="output-label">Coolant Outlet Temp</div></div>
+          <div style="text-align:right;">
+            <span class="output-val warm" id="outlet-temp">34</span><span class="output-unit">°C</span>
+          </div>
+        </div>
+        <div class="output-card reveal">
+          <div>
+            <div class="output-label">Cooling Efficiency</div>
+            <div class="efficiency-bar-wrap" style="width:120px; margin-top:6px;">
+              <div class="efficiency-bar" id="eff-bar" style="width:85%;"></div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="output-val" id="efficiency">85</span><span class="output-unit">%</span>
+          </div>
+        </div>
+        <div class="output-card reveal">
+          <div><div class="output-label">Pump Power</div></div>
+          <div style="text-align:right;">
+            <span class="output-val" id="pump-power">42</span><span class="output-unit">W</span>
+          </div>
+        </div>
+        <div class="output-card reveal" style="border-color: rgba(0,229,200,0.25);">
+          <div><div class="output-label">PUE Score</div></div>
+          <div style="text-align:right;">
+            <span class="output-val" id="pue-score">1.12</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-wrap reveal">
+        <h3>// Temperature History</h3>
+        <canvas id="tempChart" height="80"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WATER COMPARISON -->
+<section class="water-section" id="water">
+  <div style="max-width:1100px; margin:0 auto;">
+    <p class="section-label reveal">Sustainability Impact</p>
+    <h2 class="section-title reveal">Water Usage Comparison</h2>
+    <p class="section-sub reveal">Traditional data centers are among the largest consumers of fresh water. ecoData changes that equation entirely.</p>
+
+    <div class="water-grid">
+      <div class="water-card reveal">
+        <div class="water-method">Traditional Air Cooling</div>
+        <div class="water-desc">Cooling towers evaporate millions of liters of potable water annually per facility.</div>
+        <div class="water-bar-label"><span>Water Usage</span><span style="color:#ff6b35;">Very High</span></div>
+        <div class="water-bar-track"><div class="water-bar-fill bar-red" style="width:95%;"></div></div>
+        <div class="water-bar-label" style="margin-top:0.8rem;"><span>Energy Efficiency</span><span style="color:#ff6b35;">Low</span></div>
+        <div class="water-bar-track"><div class="water-bar-fill bar-red" style="width:30%;"></div></div>
+      </div>
+      <div class="water-card reveal">
+        <div class="water-method">ecoData + Fresh Water</div>
+        <div class="water-desc">Closed-loop system with minimal evaporative losses. Recirculates the same water continuously.</div>
+        <div class="water-bar-label"><span>Water Usage</span><span style="color:#ffd700;">Low</span></div>
+        <div class="water-bar-track"><div class="water-bar-fill bar-yellow" style="width:20%;"></div></div>
+        <div class="water-bar-label" style="margin-top:0.8rem;"><span>Energy Efficiency</span><span style="color:#ffd700;">High</span></div>
+        <div class="water-bar-track"><div class="water-bar-fill bar-yellow" style="width:80%;"></div></div>
+      </div>
+      <div class="water-card featured reveal">
+        <div class="water-method">ecoData + Grey Water</div>
+        <div class="water-desc">Uses filtered reclaimed water. Near-zero potable water consumption. Maximum sustainability.</div>
+        <div class="water-bar-label"><span>Water Usage</span><span style="color:#00e5c8;">Near Zero</span></div>
+        <div class="water-bar-track"><div class="water-bar-fill bar-teal" style="width:3%;"></div></div>
+        <div class="water-bar-label" style="margin-top:0.8rem;"><span>Energy Efficiency</span><span style="color:#00e5c8;">Maximum</span></div>
+        <div class="water-bar-track"><div class="water-bar-fill bar-teal" style="width:95%;"></div></div>
+      </div>
+    </div>
+
+    <!-- Scale simulator -->
+    <div class="water-scale-sim reveal">
+      <p class="section-label" style="margin-bottom:1rem;">Scale Simulation</p>
+      <div class="scale-tabs">
+        <button class="scale-tab active" onclick="setScale('server',this)">Single Server</button>
+        <button class="scale-tab" onclick="setScale('rack',this)">Server Rack</button>
+        <button class="scale-tab" onclick="setScale('row',this)">DC Row</button>
+        <button class="scale-tab" onclick="setScale('dc',this)">Full Data Center</button>
+      </div>
+      <div class="scale-compare">
+        <div class="compare-col">
+          <h4>Traditional Air Cooling</h4>
+          <div class="big-number bad" id="water-traditional">2,400 L/day</div>
+          <div class="big-sub" id="water-trad-sub">per server, per year: ~876,000 L</div>
+        </div>
+        <div class="compare-col">
+          <h4>ecoData Grey Water</h4>
+          <div class="big-number good" id="water-eco">~12 L/day</div>
+          <div class="big-sub" id="water-eco-sub">per server, per year: ~4,380 L</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="roadmap-section" id="roadmap">
+  <div style="max-width:1100px; margin:0 auto;">
+    <p class="section-label reveal">Development Roadmap</p>
+    <h2 class="section-title reveal">From Concept to Infrastructure</h2>
+
+    <div class="roadmap-track">
+      <div class="roadmap-item reveal">
+        <div class="roadmap-dot done">✓</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Phase 1 — Complete</div>
+          <div class="roadmap-title">Digital Twin Simulator</div>
+          <div class="roadmap-desc">Built a fully interactive physics-based simulator modeling the closed-loop cooling system. Real thermal calculations using Q = ṁ · Cₚ · ΔT. Live PUE scoring and efficiency metrics.</div>
+        </div>
+      </div>
+      <div class="roadmap-item reveal">
+        <div class="roadmap-dot current">→</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Phase 2 — In Progress</div>
+          <div class="roadmap-title">Physical Prototype (~$150–200)</div>
+          <div class="roadmap-desc">Building a real cooling loop with water pump, cold plate, radiator, tubing, reservoir, temperature sensors, and Arduino. Validates digital twin accuracy with real-world data.</div>
+        </div>
+      </div>
+      <div class="roadmap-item reveal">
+        <div class="roadmap-dot next">3</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Phase 3 — Planned</div>
+          <div class="roadmap-title">Rack-Scale Cooling Module</div>
+          <div class="roadmap-desc">Design a server rack cooling module integrating directly with 1U/2U servers. Target PUE of 1.1 or below.</div>
+        </div>
+      </div>
+      <div class="roadmap-item reveal">
+        <div class="roadmap-dot next">4</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Phase 4 — Vision</div>
+          <div class="roadmap-title">AI-Optimized Cooling Platform</div>
+          <div class="roadmap-desc">Software layer with AI-driven thermal prediction, real-time digital twin monitoring, and automated coolant flow control per workload demand.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="tech-section" id="tech">
+  <div style="max-width:1100px; margin:0 auto;">
+    <p class="section-label reveal">Engineering Foundation</p>
+    <h2 class="section-title reveal">Built on Real Physics</h2>
+    <p class="section-sub reveal">The simulator isn't a mock-up — it's a genuine thermal model grounded in fluid dynamics and heat transfer equations.</p>
+
+    <div class="physics-formula reveal">
+      Q = ṁ · Cₚ · ΔT
+    </div>
+
+    <p style="color: rgba(232,244,242,0.55); max-width:560px; font-size:0.9rem; margin-bottom:2rem;" class="reveal">
+      Where <strong style="color:var(--teal)">Q</strong> = heat removed (watts), <strong style="color:var(--teal)">ṁ</strong> = mass flow rate, <strong style="color:var(--teal)">Cₚ</strong> = specific heat of coolant, and <strong style="color:var(--teal)">ΔT</strong> = temperature differential across the loop.
+    </p>
+
+    <div class="tech-grid reveal">
+      <div class="tech-pill"><span class="tech-icon">🌡️</span>Thermal Modeling</div>
+      <div class="tech-pill"><span class="tech-icon">💧</span>Fluid Dynamics</div>
+      <div class="tech-pill"><span class="tech-icon">⚡</span>PUE Calculation</div>
+      <div class="tech-pill"><span class="tech-icon">📊</span>Digital Twin</div>
+      <div class="tech-pill"><span class="tech-icon">🔄</span>Real-time Simulation</div>
+      <div class="tech-pill"><span class="tech-icon">🤖</span>Arduino Integration</div>
+      <div class="tech-pill"><span class="tech-icon">💡</span>AI Optimization (roadmap)</div>
+      <div class="tech-pill"><span class="tech-icon">♻️</span>Grey Water Recycling</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <h2>Let's Build<br><span style="color:var(--teal)">Sustainable Infrastructure</span></h2>
+  <p>Whether you're an investor, engineer, or enterprise looking at sustainable cooling — let's talk about what ecoData can do for your data center.</p>
+  <div class="cta-links">
+    <a href="https://linkedin.com" class="btn-primary" target="_blank">Connect on LinkedIn</a>
+    <a href="mailto:hello@ecodata.tech" class="btn-ghost">hello@ecodata.tech</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">ecoData</div>
+  <div class="footer-copy">SUSTAINABLE COOLING · DIGITAL TWIN TECHNOLOGY · ecodata.tech</div>
+</footer>
+
+<!-- SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ── SIMULATOR LOGIC ──
+const tempHistory = { gpu: [], inlet: [], outlet: [] };
+const maxPoints = 30;
+let chart;
+
+function updateSim() {
+  const gpuW = +document.getElementById('gpu-power').value;
+  const cpuW = +document.getElementById('cpu-power').value;
+  const flowLpm = +document.getElementById('flow-rate').value / 10;
+  const ambC = +document.getElementById('amb-temp').value;
+
+  document.getElementById('gpu-val').textContent = gpuW;
+  document.getElementById('cpu-val').textContent = cpuW;
+  document.getElementById('flow-val').textContent = flowLpm.toFixed(1);
+  document.getElementById('amb-val').textContent = ambC;
+
+  const totalQ = gpuW + cpuW; // W
+  const Cp = 4186; // J/(kg·K) water
+  const rho = 1.0; // kg/L approx
+  const mdot = (flowLpm * rho) / 60; // kg/s
+  const deltaT = totalQ / (mdot * Cp);
+
+  const inletT = ambC + 3;
+  const outletT = inletT + deltaT;
+  const gpuJunction = outletT + (gpuW / 50); // simplified thermal resistance
+  const pumpW = Math.max(8, flowLpm * flowLpm * 5.5);
+  const efficiency = Math.min(98, Math.max(40, 100 - (outletT - inletT) * 3));
+  const pue = 1 + (pumpW / (totalQ));
+
+  document.getElementById('gpu-temp').textContent = Math.round(gpuJunction);
+  document.getElementById('inlet-temp').textContent = Math.round(inletT);
+  document.getElementById('outlet-temp').textContent = Math.round(outletT);
+  document.getElementById('efficiency').textContent = Math.round(efficiency);
+  document.getElementById('pump-power').textContent = Math.round(pumpW);
+  document.getElementById('pue-score').textContent = pue.toFixed(2);
+
+  // Color coding
+  const gpuEl = document.getElementById('gpu-temp');
+  gpuEl.className = 'output-val ' + (gpuJunction > 85 ? 'hot' : gpuJunction > 65 ? 'warm' : '');
+  document.getElementById('gpu-bar').style.width = Math.min(100, (gpuJunction / 100) * 100) + '%';
+  document.getElementById('eff-bar').style.width = efficiency + '%';
+
+  // Chart update
+  if (tempHistory.gpu.length >= maxPoints) {
+    tempHistory.gpu.shift(); tempHistory.inlet.shift(); tempHistory.outlet.shift();
+  }
+  tempHistory.gpu.push(Math.round(gpuJunction));
+  tempHistory.inlet.push(Math.round(inletT));
+  tempHistory.outlet.push(Math.round(outletT));
+
+  if (chart) {
+    chart.data.labels = tempHistory.gpu.map((_, i) => i);
+    chart.data.datasets[0].data = [...tempHistory.gpu];
+    chart.data.datasets[1].data = [...tempHistory.inlet];
+    chart.data.datasets[2].data = [...tempHistory.outlet];
+    chart.update('none');
+  }
+}
+
+function initChart() {
+  const ctx = document.getElementById('tempChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'GPU Junction (°C)',
+          data: [],
+          borderColor: '#ff6b35',
+          backgroundColor: 'rgba(255,107,53,0.08)',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Coolant Inlet (°C)',
+          data: [],
+          borderColor: '#0af0ff',
+          backgroundColor: 'rgba(10,240,255,0.05)',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.4,
+          fill: false,
+        },
+        {
+          label: 'Coolant Outlet (°C)',
+          data: [],
+          borderColor: '#00e5c8',
+          backgroundColor: 'rgba(0,229,200,0.05)',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.4,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: 'rgba(232,244,242,0.5)',
+            font: { family: 'Space Mono', size: 10 },
+            boxWidth: 12,
+          }
+        }
+      },
+      scales: {
+        x: {
+          display: false,
+        },
+        y: {
+          grid: { color: 'rgba(0,229,200,0.06)' },
+          ticks: { color: 'rgba(232,244,242,0.4)', font: { family: 'Space Mono', size: 9 } },
+          border: { color: 'rgba(0,229,200,0.1)' },
+        }
+      }
+    }
+  });
+  // init with some data
+  for (let i = 0; i < 15; i++) updateSim();
+}
+
+// ── WATER SCALE DATA ──
+const scaleData = {
+  server: {
+    trad: '2,400 L/day',
+    tradSub: 'per server — annually: ~876,000 L',
+    eco: '~12 L/day',
+    ecoSub: 'per server — annually: ~4,380 L saved'
+  },
+  rack: {
+    trad: '48,000 L/day',
+    tradSub: 'per 20-server rack — annually: ~17.5M L',
+    eco: '~240 L/day',
+    ecoSub: 'per rack — 99% reduction vs traditional'
+  },
+  row: {
+    trad: '480,000 L/day',
+    tradSub: 'per 10-rack row — annually: ~175M L',
+    eco: '~2,400 L/day',
+    ecoSub: 'per row — saves ~173M L/year'
+  },
+  dc: {
+    trad: '9.6M L/day',
+    tradSub: 'hyperscale DC — annually: ~3.5 billion L',
+    eco: '~48,000 L/day',
+    ecoSub: 'full DC — saves 3.49 billion L/year'
+  }
+};
+
+function setScale(key, btn) {
+  document.querySelectorAll('.scale-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const d = scaleData[key];
+  const tradEl = document.getElementById('water-traditional');
+  const ecoEl = document.getElementById('water-eco');
+  tradEl.style.opacity = '0'; ecoEl.style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('water-traditional').textContent = d.trad;
+    document.getElementById('water-trad-sub').textContent = d.tradSub;
+    document.getElementById('water-eco').textContent = d.eco;
+    document.getElementById('water-eco-sub').textContent = d.ecoSub;
+    tradEl.style.opacity = '1'; ecoEl.style.opacity = '1';
+  }, 200);
+  tradEl.style.transition = 'opacity 0.2s'; ecoEl.style.transition = 'opacity 0.2s';
+}
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  initChart();
+  // Kick off live updates
+  setInterval(() => {
+    const sliders = ['gpu-power','cpu-power','flow-rate','amb-temp'];
+    const r = sliders[Math.floor(Math.random() * sliders.length)];
+    const el = document.getElementById(r);
+    const delta = (Math.random() - 0.5) * 10;
+    el.value = Math.max(+el.min, Math.min(+el.max, +el.value + delta));
+    updateSim();
+  }, 1200);
+});
+</script>
+</body>
+</html>
